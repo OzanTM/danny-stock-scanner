@@ -338,7 +338,12 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
-    debug = os.environ.get("FLASK_ENV", "development") == "development"
-    host = os.environ.get("FLASK_HOST", "127.0.0.1")
-    port = int(os.environ.get("FLASK_PORT", "5000"))
+
+    # Render injects PORT; when present always bind all interfaces for health checks.
+    render_port = os.environ.get("PORT")
+    port = int(render_port or os.environ.get("FLASK_PORT", "5000"))
+    host = "0.0.0.0" if render_port else os.environ.get("FLASK_HOST", "0.0.0.0")
+
+    # Keep debug off by default in deployments unless explicitly enabled.
+    debug = os.environ.get("FLASK_DEBUG", "0") in {"1", "true", "True"}
     app.run(debug=debug, host=host, port=port)
