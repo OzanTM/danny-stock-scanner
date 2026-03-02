@@ -126,6 +126,13 @@ def index():
     status_message = session.get("status_message")
     active_job_id = session.get("active_job_id")
     active_job = job_runner.get_job(active_job_id) if active_job_id else None
+    if active_job_id and not active_job:
+        session.pop("active_job_id", None)
+        session["status_message"] = (
+            "Önceki tarama kaydı bulunamadı (sunucu yeniden başlamış olabilir). "
+            "Lütfen taramayı tekrar başlatın."
+        )
+        return redirect(url_for("index"))
 
     if active_job and active_job.get("status") in {"COMPLETED", "FAILED"}:
         session.pop("active_job_id", None)
@@ -196,7 +203,23 @@ def signals_guide():
 def scan_status(job_id: str):
     job = job_runner.get_job(job_id)
     if not job:
-        return jsonify({"error": "job_not_found"}), 404
+        if session.get("active_job_id") == job_id:
+            session.pop("active_job_id", None)
+            session["status_message"] = (
+                "Tarama kaydı bulunamadı (sunucu yeniden başlamış olabilir). "
+                "Yeniden tarama başlatın."
+            )
+        return jsonify(
+            {
+                "id": job_id,
+                "status": "FAILED",
+                "created_at": None,
+                "started_at": None,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "error": "job_not_found",
+                "result_count": 0,
+            }
+        )
 
     return jsonify(
         {
