@@ -15,8 +15,8 @@ class ScannerConfig:
     signal_level: float = 50.0
     history_days: int = 5
     max_tickers: int | None = None
-    request_timeout_seconds: int = 3
-    max_workers: int = 12
+    request_timeout_seconds: int = 5  # Increased from 3s for better reliability
+    max_workers: int = 5  # Reduced from 12 to avoid rate limiting
 
     @classmethod
     def from_project_root(cls, project_root: Path) -> "ScannerConfig":
