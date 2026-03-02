@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem__directory_tree",
+      "Bash(wc -l /Users/Ozan/Desktop/Projeler/Danny/templates/*.html /Users/Ozan/Desktop/Projeler/Danny/static/*.css)",
+      "Bash(/Users/Ozan/Desktop/Projeler/Danny/venv/bin/python -m pytest tests/ -v)",
+      "Bash(/Users/Ozan/Desktop/Projeler/Danny/venv/bin/python -c \":*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(grep -n \"download\\\\|csv\\\\|export\" /Users/Ozan/Desktop/Projeler/Danny/templates/*.html)",
+      "Bash(git init)"
+    ]
+  }
+}

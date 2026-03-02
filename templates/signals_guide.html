@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinyal Rehberi - RCYC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a class="navbar-brand" href="{{ url_for('index') }}">RCYC Tarayıcı</a>
+        <div class="navbar-links">
+            <a href="{{ url_for('index') }}">Ana Sayfa</a>
+            <a href="{{ url_for('signals') }}">Sinyal Paneli</a>
+            <a href="{{ url_for('summary') }}">Özet</a>
+            <a href="{{ url_for('signals_guide') }}" class="active">Rehber</a>
+        </div>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="page-header">
+        <h1>Sinyal Karar Mekanizması</h1>
+        <p>Her göstergenin ne anlama geldiği ve nasıl yorumlandığı</p>
+    </div>
+
+    <div class="card guide-card">
+        <h2>Trend var mı? (EMA)</h2>
+        <p><span class="badge badge-good">Yukarı Trend</span> <code>Close &gt; EMA50</code> ve <code>EMA20 &gt; EMA50</code></p>
+        <p><span class="badge badge-bad">Aşağı Trend</span> <code>Close &lt; EMA50</code> ve <code>EMA20 &lt; EMA50</code></p>
+        <p><span class="badge badge-neutral">Nötr</span> Diğer kombinasyonlar</p>
+    </div>
+
+    <div class="card guide-card">
+        <h2>Trend güçleniyor mu? (MACD)</h2>
+        <p><span class="badge badge-good">Güçleniyor</span> <code>MACD line &gt; Signal</code> ve <code>Histogram &gt; 0</code></p>
+        <p><span class="badge badge-bad">Zayıflıyor</span> <code>MACD line &lt; Signal</code> ve <code>Histogram &lt; 0</code></p>
+    </div>
+
+    <div class="card guide-card">
+        <h2>Giriş zamanlaması (RSI + KDJ)</h2>
+        <p><span class="badge badge-bad">Geç / Isınmış</span> <code>RSI &gt; 70</code> veya <code>KDJ J &gt; 85</code></p>
+        <p><span class="badge badge-good">Erken / Fırsat</span> <code>RSI &lt; 35</code> ve <code>KDJ J &lt; 20</code></p>
+        <p><span class="badge badge-good">Uygun</span> <code>45 &le; RSI &le; 65</code> ve <code>40 &le; J &le; 70</code></p>
+        <p><span class="badge badge-warn">Dikkat</span> Diğer kombinasyonlar</p>
+    </div>
+
+    <div class="card guide-card">
+        <h2>Hareket patlamak üzere mi? (Bollinger)</h2>
+        <p><span class="badge badge-good">Yukarı Patlama</span> <code>Close &gt; BB Upper</code></p>
+        <p><span class="badge badge-bad">Aşağı Patlama</span> <code>Close &lt; BB Lower</code></p>
+        <p><span class="badge badge-warn">Sıkışma Adayı</span> <code>BB Width% &lt; 6</code></p>
+    </div>
+
+    <div class="card guide-card">
+        <h2>Risk ne kadar? (ATR)</h2>
+        <p><span class="badge badge-bad">Yüksek Risk</span> <code>ATR% &ge; 4</code></p>
+        <p><span class="badge badge-warn">Orta Risk</span> <code>2 &le; ATR% &lt; 4</code></p>
+        <p><span class="badge badge-good">Düşük Risk</span> <code>ATR% &lt; 2</code></p>
+    </div>
+</div>
+</body>
+</html>

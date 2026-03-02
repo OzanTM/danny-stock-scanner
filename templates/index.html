@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCYC Bullish Bearish Tarayıcı</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a class="navbar-brand" href="{{ url_for('index') }}">RCYC Tarayıcı</a>
+        <div class="navbar-links">
+            <a href="{{ url_for('index') }}" class="active">Ana Sayfa</a>
+            <a href="{{ url_for('signals') }}">Sinyal Paneli</a>
+            <a href="{{ url_for('summary') }}">Özet</a>
+            <a href="{{ url_for('signals_guide') }}">Rehber</a>
+        </div>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="page-header">
+        <h1>Hisse Senedi Tarayıcı</h1>
+        <p>KDJ sinyalleri ile bullish/bearish hisse taraması</p>
+    </div>
+
+    {% if status_message %}
+        <div class="alert alert-info">{{ status_message }}</div>
+    {% endif %}
+
+    {% if active_job %}
+        <div class="alert alert-scan" id="job-status" data-job-id="{{ active_job.id }}">
+            Tarama durumu: {{ active_job.status }}
+        </div>
+    {% endif %}
+
+    <div class="meta-info">
+        {% if latest_scan_finished_at %}
+            <span>Son tarama: <strong>{{ latest_scan_finished_at }}</strong></span>
+        {% endif %}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="scan">
+            <button type="submit" class="btn btn-success" {% if active_job and active_job.status in ['PENDING', 'RUNNING'] %}disabled{% endif %}>
+                Taramayı Başlat
+            </button>
+        </form>
+        <a href="{{ url_for('download_csv') }}" class="btn btn-secondary">CSV İndir</a>
+    </div>
+
+    <!-- Filtreleme -->
+    <div class="card">
+        <div class="card-header">Filtreleme</div>
+        <form method="post">
+            <input type="hidden" name="action" value="filter">
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label for="sector">Sektör</label>
+                    <select name="sector" id="sector">
+                        <option value="all" {% if form_state.sector == 'all' %}selected{% endif %}>Tümü</option>
+                        {% for sector in sectors %}
+                            <option value="{{ sector }}" {% if form_state.sector == sector %}selected{% endif %}>{{ sector }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="industry">Endüstri</label>
+                    <select name="industry" id="industry">
+                        <option value="all" {% if form_state.industry == 'all' %}selected{% endif %}>Tümü</option>
+                        {% for industry in industries %}
+                            <option value="{{ industry }}" {% if form_state.industry == industry %}selected{% endif %}>{{ industry }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signal">Sinyal</label>
+                    <select name="signal" id="signal">
+                        <option value="all" {% if form_state.signal == 'all' %}selected{% endif %}>Tümü</option>
+                        <option value="Bullish (Kırmızı Mum)" {% if form_state.signal == 'Bullish (Kırmızı Mum)' %}selected{% endif %}>Bullish</option>
+                        <option value="Bearish (Sarı Mum)" {% if form_state.signal == 'Bearish (Sarı Mum)' %}selected{% endif %}>Bearish</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sort_by">Sırala</label>
+                    <select name="sort_by" id="sort_by">
+                        <option value="ticker" {% if form_state.sort_by == 'ticker' %}selected{% endif %}>Ticker</option>
+                        <option value="name" {% if form_state.sort_by == 'name' %}selected{% endif %}>Hisse Adı</option>
+                        <option value="sector" {% if form_state.sort_by == 'sector' %}selected{% endif %}>Sektör</option>
+                        <option value="industry" {% if form_state.sort_by == 'industry' %}selected{% endif %}>Endüstri</option>
+                        <option value="date" {% if form_state.sort_by == 'date' %}selected{% endif %}>Tarih</option>
+                        <option value="close_price" {% if form_state.sort_by == 'close_price' %}selected{% endif %}>Kapanış Fiyatı</option>
+                        <option value="market_cap" {% if form_state.sort_by == 'market_cap' %}selected{% endif %}>Piyasa Değeri</option>
+                        <option value="signal" {% if form_state.sort_by == 'signal' %}selected{% endif %}>Sinyal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sort_dir">Yön</label>
+                    <select name="sort_dir" id="sort_dir">
+                        <option value="asc" {% if form_state.sort_dir == 'asc' %}selected{% endif %}>Artan</option>
+                        <option value="desc" {% if form_state.sort_dir == 'desc' %}selected{% endif %}>Azalan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="market_cap_min">Min Piyasa Değeri</label>
+                    <input type="number" name="market_cap_min" id="market_cap_min" value="{{ form_state.market_cap_min }}" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="market_cap_max">Max Piyasa Değeri</label>
+                    <input type="number" name="market_cap_max" id="market_cap_max" value="{{ form_state.market_cap_max }}" placeholder="Sınırsız">
+                </div>
+                <div class="form-group" style="justify-content:end">
+                    <button type="submit" class="btn btn-primary">Filtrele</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sonuçlar -->
+    {% if results %}
+    <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:600">Tarama Sonuçları</span>
+            <span style="font-size:.75rem;color:var(--text-muted)">{{ results|length }} sonuç</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Tarih</th>
+                        <th>Kapanış</th>
+                        <th>4. Gün</th>
+                        <th>3. Gün</th>
+                        <th>2. Gün</th>
+                        <th>1. Gün</th>
+                        <th>Bugün</th>
+                        <th>Piyasa Değeri</th>
+                        <th>Hisse Adı</th>
+                        <th>Sektör</th>
+                        <th>Endüstri</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td><strong>{{ result.ticker }}</strong></td>
+                        <td>{{ result.date }}</td>
+                        <td>{{ result.close_price }}</td>
+                        <td class="{{ 'bullish' if result.prev_signal_4 == 'Bullish (Kırmızı Mum)' else 'bearish' if result.prev_signal_4 == 'Bearish (Sarı Mum)' else '' }}">{{ result.prev_signal_4 }}</td>
+                        <td class="{{ 'bullish' if result.prev_signal_3 == 'Bullish (Kırmızı Mum)' else 'bearish' if result.prev_signal_3 == 'Bearish (Sarı Mum)' else '' }}">{{ result.prev_signal_3 }}</td>
+                        <td class="{{ 'bullish' if result.prev_signal_2 == 'Bullish (Kırmızı Mum)' else 'bearish' if result.prev_signal_2 == 'Bearish (Sarı Mum)' else '' }}">{{ result.prev_signal_2 }}</td>
+                        <td class="{{ 'bullish' if result.prev_signal_1 == 'Bullish (Kırmızı Mum)' else 'bearish' if result.prev_signal_1 == 'Bearish (Sarı Mum)' else '' }}">{{ result.prev_signal_1 }}</td>
+                        <td class="{{ 'bullish' if result.signal == 'Bullish (Kırmızı Mum)' else 'bearish' if result.signal == 'Bearish (Sarı Mum)' else '' }}">{{ result.signal }}</td>
+                        <td>{{ result.market_cap | thousands }}</td>
+                        <td>{{ result.name }}</td>
+                        <td>{{ result.sector }}</td>
+                        <td>{{ result.industry }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card empty-state">
+        <p>Henüz tarama sonucu yok. Yukarıdaki butona tıklayarak tarama başlatın.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+    const el = document.getElementById('job-status');
+    if (!el) return;
+    const jobId = el.dataset.jobId;
+    const poll = async () => {
+        try {
+            const res = await fetch(`/scan_status/${jobId}`, { cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            el.textContent = `Tarama durumu: ${data.status}`;
+            if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+                window.location.reload();
+            }
+        } catch (e) { /* retry next tick */ }
+    };
+    setInterval(poll, 2500);
+})();
+</script>
+</body>
+</html>

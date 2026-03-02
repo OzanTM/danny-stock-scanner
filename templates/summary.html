@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarama Özeti - RCYC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a class="navbar-brand" href="{{ url_for('index') }}">RCYC Tarayıcı</a>
+        <div class="navbar-links">
+            <a href="{{ url_for('index') }}">Ana Sayfa</a>
+            <a href="{{ url_for('signals') }}">Sinyal Paneli</a>
+            <a href="{{ url_for('summary') }}" class="active">Özet</a>
+            <a href="{{ url_for('signals_guide') }}">Rehber</a>
+        </div>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="page-header">
+        <h1>Tarama Özeti</h1>
+        <p>Sektör ve endüstri bazında sinyal dağılımı</p>
+    </div>
+
+    <div class="meta-info">
+        <div>
+            {% if latest_scan_finished_at %}
+                <span>Son tarama: <strong>{{ latest_scan_finished_at }}</strong></span>
+            {% endif %}
+            {% if latest_job_id %}
+                <span>Job: <strong>{{ latest_job_id[:8] }}</strong></span>
+            {% endif %}
+        </div>
+        {% if summary and summary.total > 0 %}
+            <a href="{{ url_for('download_csv_summary') }}" class="btn btn-secondary">CSV İndir</a>
+        {% endif %}
+    </div>
+
+    {% if summary and summary.total > 0 %}
+    <!-- İstatistik Kartları -->
+    <div class="stat-grid">
+        <div class="stat-card stat-total">
+            <div class="stat-value">{{ summary.total }}</div>
+            <div class="stat-label">Toplam Sinyal</div>
+        </div>
+        <div class="stat-card stat-bull">
+            <div class="stat-value">{{ summary.bullish }}</div>
+            <div class="stat-label">Bullish</div>
+        </div>
+        <div class="stat-card stat-bear">
+            <div class="stat-value">{{ summary.bearish }}</div>
+            <div class="stat-label">Bearish</div>
+        </div>
+    </div>
+
+    <!-- Sektör Özeti -->
+    <div class="card">
+        <div class="card-header">Sektör Özeti</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sektör</th>
+                        <th>Toplam</th>
+                        <th>Bullish</th>
+                        <th>Bearish</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in summary.by_sector %}
+                    <tr>
+                        <td><strong>{{ row.name }}</strong></td>
+                        <td>{{ row.total }}</td>
+                        <td class="bullish">{{ row.bullish }}</td>
+                        <td class="bearish">{{ row.bearish }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Endüstri Özeti -->
+    {% for group in summary.by_sector_industry %}
+    <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <span>{{ group.sector }}</span>
+            <span style="font-size:.75rem;font-weight:500;color:var(--text-muted)">
+                Toplam: {{ group.total }} &middot;
+                <span class="bullish">{{ group.bullish }} Bullish</span> &middot;
+                <span class="bearish">{{ group.bearish }} Bearish</span>
+            </span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endüstri</th>
+                        <th>Toplam</th>
+                        <th>Bullish</th>
+                        <th>Bearish</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in group.industries %}
+                    <tr>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.total }}</td>
+                        <td class="bullish">{{ row.bullish }}</td>
+                        <td class="bearish">{{ row.bearish }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="card empty-state">
+        <p>Henüz özet oluşturulacak tarama sonucu yok. Önce ana sayfadan tarama başlatın.</p>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>
