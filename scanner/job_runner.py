@@ -42,12 +42,15 @@ class ScanJobRunner:
 
     def _run_job(self, job_id: str) -> None:
         self._store.mark_running(job_id, self._now())
+        logger.info("Tarama calisiyor: %s", job_id)
         try:
             results, error = self._service.run_scan()
             if error:
                 self._store.mark_failed(job_id, self._now(), error)
+                logger.warning("Tarama basarisiz bitti: %s | hata=%s", job_id, error)
             else:
                 self._store.mark_completed(job_id, self._now(), results)
+                logger.info("Tarama tamamlandi: %s | sonuc_sayisi=%d", job_id, len(results))
         except Exception as exc:
             logger.exception("Tarama basarisiz (job_id=%s): %s", job_id, exc)
             self._store.mark_failed(job_id, self._now(), f"Beklenmeyen hata: {exc}")

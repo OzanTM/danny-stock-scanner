@@ -176,18 +176,51 @@
     const el = document.getElementById('job-status');
     if (!el) return;
     const jobId = el.dataset.jobId;
+    const maxFailures = 8;
+    let failures = 0;
+    let timerId = null;
+
+    const stopPolling = (message) => {
+        if (message) {
+            el.textContent = message;
+        }
+        if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+        }
+    };
+
     const poll = async () => {
         try {
             const res = await fetch(`/scan_status/${jobId}`, { cache: 'no-store' });
-            if (!res.ok) return;
+            if (res.status === 404) {
+                stopPolling('Tarama kaydı bulunamadı. Sunucu yeniden başlamış olabilir, sayfayı yenileyin.');
+                return;
+            }
+            if (!res.ok) {
+                failures += 1;
+                if (failures >= maxFailures) {
+                    stopPolling('Tarama durumuna ulaşılamıyor. Sayfayı yenileyip tekrar deneyin.');
+                }
+                return;
+            }
+
+            failures = 0;
             const data = await res.json();
             el.textContent = `Tarama durumu: ${data.status}`;
             if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+                stopPolling();
                 window.location.reload();
             }
-        } catch (e) { /* retry next tick */ }
+        } catch (e) {
+            failures += 1;
+            if (failures >= maxFailures) {
+                stopPolling('Geçici ağ/sunucu sorunu var. Sayfayı yenileyip tekrar deneyin.');
+            }
+        }
     };
-    setInterval(poll, 2500);
+    poll();
+    timerId = setInterval(poll, 2500);
 })();
 </script>
 </body>
